@@ -1,0 +1,576 @@
+Go Codelab: Fundamentos
+Jan 2015, GDG Maceió
+Tags: go golang
+
+Daniel Fireman
+Ex Googler, Gopher, metido a corredor 
+danielfireman@gmail.com
+http://www.danielfireman.com
+
+#gocodelab
+
+* Sobre esse que vos fala
+
+- IFAL, UFCG, UFMG
+- Software Engineer Intern, Google NYC, '08: Google Checkout
+- Software Engineer in Tests, Google ZRH, '09-'11: Testes de Integração
+- Software Engineer, Google BH, '11-'15: Orkut, Google My Business, Core Frameworks
+- Entusiasta de educação, apaixonado por Maceió, agoniado e metido a corredor
+- Interessado em computação na nuvem, alto desempenho, escalabilidade, arquitetura, testes e design de software
+
+* Disclaimer
+
+Slides são fortemente inspirados em:
+
+- [[https://talks.golang.org/2015/go4cpp.slide#1][Go for C++ Developers]], por Francesc Campoy
+- [[http://talks.golang.org/2014/go4java.slide#1][Go for Javaneros (Javaïstes?)]], por Francesc Campoy
+- [[https://talks.golang.org/2015/go-for-java-programmers.slide#1][Go for java Programmers]], por Sameer Ajmani
+- [[http://talks.golang.org/2012/zen.slide#1][Go and the Zen of Python]], por Andrew Gerrand
+- [[http://talks.golang.org/2014/organizeio.slide#1][Organizing Go code]], por David Crawshaw
+
+* Parte 1: Intro + Organização do Código Go
+
+* O que é Go?
+
+"Go é uma linguagem de programação open source que torna fácil construir software simples, robusto e eficiente."  --  [[http://golang.org][golang.org]]
+
+Criada pelo Google, para resolver problemas na escala Google
+
+.image ./gocodelab/gopher_hat.jpg 450 _
+
+* Go também é ...
+
+- Staticamente tipada
+- Orientada a objetos
+- Compilada
+- Memory safe
+- Type safe
+- Runtime pequena (garbage collector, scheduler, etc)
+- Um monte de ferramentas (build, fetch, test, document, profile, format)
+- Uma [[https://medium.com/@dgryski/the-go-community-f0d00e3a19e][comunidade]] super bacana e diversa (woman who go, golang bridge, etc)
+
+* Quem usa Go?
+
+- Google (dl.google.com, YouTube, GCE)
+- Docker
+- SoundCloud
+- Canonical
+- Mozilla
+- Kubernetes
+- Datahog HQ
+- ...
+
+[[http://golang.org/wiki/GoUsers][golang.org/wiki/GoUsers]]
+
+* 
+
+.image gocodelab/trends.png _ 800
+
+.caption Google Trends para [[http://www.google.com/trends/explore#q=golang][golang]]
+
+* Por que Go?
+
+* Simplicidade
+
+Design mínimo, linguagem enxuta
+
+.image gocodelab/perfection.jpg
+
+* Consistência
+
+Features ortogonais, só um jeito de fazer as coisas
+
+.image gocodelab/lego.jpg 400 _
+
+.caption By Kenny Louie, de Vancouver-CA [[http://creativecommons.org/licenses/by/2.0][CC-BY-2.0]], via Wikimedia Commons
+
+* Legibilidade
+
+“The ratio of time spent reading (code) versus writing is well over 10 to 1 ... (therefore) making it easy to read makes it easier to write.”
+― Robert C. Martin
+
+.image gocodelab/piet.png 500 600 
+
+* Segurança
+
+Type safety, sem buffer overflows, sem pointer arithmetic.
+
+.image gocodelab/baby.jpg 500 500
+
+* Boas primitivas de concorrência como parte da linguagem
+
+“In a concurrent world, imperative is the wrong default!” - Tim Sweeney
+
+Communicating Sequential Processes - Hoare (1978)
+
+.image gocodelab/conc.jpg _ 1000
+
+* Velocidade
+
+.image gocodelab/fast.jpg 500 _
+
+
+* Pacotes
+
+* Programas Go são feitos de pacotes
+
+- Todo programa Go é parte de um pacote
+- Todo código Go começa com `package` [nome do pacote] (pode ter comentário antes)
+- Programas começam no pacote main
+
+.play gocodelab/hello.go
+
+- O programa hello world importa o pacote fmt
+- A função `Println` é definida dentro do pacote fmt.
+
+* A forma de uma pacote
+ 
+- Pacotes são uma forma de agrupar código relacionado
+
+Podem ser grandes ou pequenos
+Podem ter um ou vários arquivos
+
+- Todos os arquivos de um pacote tem que estar no mesmo diretório
+
+O pacote `net/http` exporta mais de 100 nomes. (18 arquivos)
+O pacote `errors` exporta somente um nome. (1 arquivo)
+
+* Workspaces
+
+* Todo código go vive num workspace
+
+- É inspirado em repositórios open source público,
+
+Porém um workspace Go pode conter código vários repositórios (git, hg, bitbucket)
+
+- O commando `go` entende o layout de um workspace:
+
+ . src: código Go organizado em pacotes
+ . pkg: objetos de pacotes
+ . bin: binários
+
+* Populando um workspace
+
+  	mkdir /tmp/gows
+	GOPATH=/tmp/go
+
+- A variável de ambiente GOPATH diz ao comando `go` onde o workspace é localizado
+
+	go get github.com/julienschmidt/httprouter
+
+- O comando `go get` faz download do repositório e coloca no workspace
+- O comando `go install` compila o binário e coloca em $GOPATH/bin
+
+* Por que forçar um layout fixo?
+
+- Usar o layout dos arquivos no build leva a menos configuração
+
+Na realidade, zero configuração.
+Sem Makefile ou build.xml.
+Por fim, menos tempo configurando significa mais tempo programando
+
+- Todos na comunidade usam o mesmo layout
+
+Mais fácil de compartilhar código
+O command `go` ajuda a construir a comunidade
+
+* Gerenciamento de dependências
+
+* Em produção, manter versões é importante
+
+`go` `get` sempre faz download da ultima versão do código, mesmo que o seu build quebre
+
+.image gocodelab/gogetversion.png
+
+Tranquilo no desenvolvimento, péssimo no release
+
+* experimento vendor/
+
+- Na linguagem desde a versão 1.5.
+
+- Copie os pacotes que você precisa para o diretório _vendor_, na raiz do seu projeto
+
+- Habilitado via variável de ambiente: `GO15VENDOREXPERIMENT=1`.
+
+- Usei github.com/kardianos/govendor para gerenciar o diretório vendor
+
+  go install github.com/kardianos/govendor
+  govendor init
+  govendor add github.com/julienschmidt/httprouter
+
+* Mão na massa!
+
+* Hello World HTTP
+
+- Criar workspace
+- Importar github.com/julienschmidt/httprouter para o workspace
+- Criar um pacote para o servidor
+- Vendor github.com/julienschmidt/httprouter
+- Criar o binário utilizando httprouter
+
+.image gocodelab/ninja.jpg 300 _
+
+* Solução
+
+.play gocodelab/hello/main.go
+
+* Parte 2: Tipos, Ponteiros e Memória
+
+* Tipos
+
+- primitivos
+
+	int, uint, int8, uint8, ...
+	bool, string
+	float32, float64
+	complex64, complex128
+
+- structs
+
+	struct {
+		Name string
+		Age  int
+	}
+
+- slices e arrays
+
+	[]int, [3]string, []struct{ Name string }
+
+- mapas
+
+	map[string]int
+
+* Novidades ?!? ...
+
+- ponteiros
+
+	*int, *Person
+
+- funções
+
+	func(int, int) int
+
+- canais
+
+	chan bool
+
+- interfaces
+
+	interface {
+		Start()
+	}
+
+* Declaração de tipos
+
+	type [name] [specification]
+
+`Person` é do tipo `struct`.
+
+	type Person struct {
+		name string
+		age  int
+	}
+
+`Celsius` é do tipo `float64`.
+
+	type Celsius float64
+
+* Declaração de funções
+
+	func [name] ([params]) [return value]
+	func [name] ([params]) ([return values])
+
+Uma função de somar:
+
+	func sum(a int, b int) int {
+		return a + b
+	}
+
+Uma função valores de retorno múltiplos:
+
+	func divMod(a, b int) (int, int) {
+		return a / b, a % b
+	}
+
+É possível nomear os valores de retorno:
+
+	func divMod(den, div int) (quo, rem int) {
+		return den / div, den % div
+	}
+
+* Declaração de métodos
+
+	func ([receiver]) [name] ([params]) ([return values])
+
+Método IsMinor na struct Pessoa:
+
+	func (p Person) IsMinor() bool {
+		return p.age < 18
+	}
+
+Mas também é métodos em `float64`:
+
+	func (c Celsius) Freezing() bool {
+		return c <= 0
+	}
+
+_Constraint:_ Métodos *só* podem ser definidos em tipos declarados no mesmo pacote
+
+	// Isso não compila
+	func (s string) Length() int { return len(s) }
+
+* Declaração de variáveis
+
+Normal declaration:
+
+    var text string = "hello"
+
+O tipo pode ser omitido:
+
+    var text = "hello"
+
+E dentro de funções ou métodos:
+
+    text := "hello"
+
+Outros tipos
+
+    a := 0                     // int
+    b := true                  // boolean
+    f := 1.0                   // float64
+    p := Person{"Foo", "Bar"}  // Person
+
+* Não existe conversão numérica implícita
+
+Dados os tipos:
+
+    type Celsius float64
+
+    type Fahrenheit float64
+
+E as variáveis:
+
+    var freezing Fahrenheit = 32
+    var boiling Celsius = 100
+
+Este código não compila:
+
+    sauna := (freezing + boiling) / 2
+
+* Ponteiros
+
+* Sério, ponteiros?
+
+	a := "hello"
+	p := &a // use `&` para o obter o endereço de uma variável;
+	p1 := new(int)  // existe new mas não existe delete
+
+Use `*` para dereferenciar o ponteiro.
+
+	fmt.Print(*p + ", world")
+
+Sem aritimética de ponteiro, sem ponteiros para áreas obscuras da memória.
+
+	a := "hello"
+	p := &a
+	p += 4  // nops
+
+Feeling lucky? Pacote [[https://golang.org/pkg/unsafe][usafe]] (Aprecie com moderação)
+
+* Por que ponteiros?
+
+Controlar o que é passado para funções
+
+- passagem por valor: sem efeitos colaterais:
+
+	func double(x int) {
+		x *= 2
+	}
+
+- passagem por ponteiro: efeito colateral possível
+
+	func double(x *int) {
+		*x *= 2
+	}
+
+Controle do layout de memória.
+
+- compare []Person and []*Person
+
+* Declaração de métodos em pointeiros
+
+Comportamento igual ao de qualquer outro argumento
+
+Ponteiros permitem modificação no objeto apontado (como uma referência em C++):
+
+	func (p *Person) IncAge() {
+		p.age++
+	}
+
+Na verdade é passado uma cópia do pointeiro (apontando para o mesmo endereço de memória).
+
+Chamadas de função em nil são perfeitamente válidas e úteis.
+
+	func (p *Person) Name() string {
+		if p == nil {
+			return "anonymous"
+		}
+		return p.name
+	}
+
+* Gerenciamento de Memória
+
+* Alocação de memória
+
+O compilador decide onde alocar a memória baseado em análise de escape.
+
+Usar `new` não implica em alocar memória no heap:
+
+`stack.go`:
+
+    func get() int {
+        n := new(int)
+        return *n
+    }
+
+E nem todos os valores no heap são creados com `new`:
+
+`heap.go`:
+
+    func get() *int {
+        n := 4
+        return &n
+    }
+
+* Heap ou stack?
+
+Você não pode escolher onde um valor será alocado
+
+Mas pode ver que tipo de alocação foi usada
+
+    $ go tool 6g -m stack.go
+
+    stack.go:3: can inline get
+    stack.go:4: get new(int) does not escape
+
+Comparada com:
+
+    $ go tool 6g -m heap.go
+
+    heap.go:3: can inline get
+    heap.go:4: moved to heap: n
+    heap.go:5: &n escapes to heap
+
+* Coletor de lixo
+
+Go possui um coletor de lixo
+
+Mas é simples de limitar alocações no heap
+
+- Muitos valores são alocados na pilha
+- Pools de objetos: [[https://golang.org/pkg/sync/#Pool][sync/#Pool]]
+- Uso de uma área contígua de memória:
+
+.play gocodelab/date_size.go  /type/,
+
+* Mais sobre o coletor de lixo
+
+Confiável em produção 
+
+- [[https://talks.golang.org/2013/oscon-dl.slide#1][dl.google.com: Powered by Go]]
+
+E melhorando ...
+.image gocodelab/gc_improvement.png 370 _
+
+* Mão na massa!
+
+* Agregador de resultados de busca
+
+.image gocodelab/frontend-screenshot.png _ 1000
+
+.image gocodelab/ninja.jpg 300 _
+
+* Detalhe
+
+- Por favor, vamos tentar só usar a biblioteca padrão! :D
+
+Para isso, uma dica:
+
+.play gocodelab/frontend1.go /func main/,/func handleSearch/
+
+* Validação dos parâmetros da URL
+
+.code gocodelab/frontend1.go /func handleSearch/,/ENDQUERY/
+
+`FormValue` é um método *no* tipo `*http.Request`:
+
+  package http
+  type Request struct {...}
+  func (r *Request) FormValue(key string) string {...}
+
+`query`:=`req.FormValue("q")` inicializa uma nova variable `query` com
+o tipo da expressão do lado direito, `string`
+
+* Fetch dos resultados da busca do Google
+
+.code gocodelab/frontend1.go /Run the Google search/,/ENDSEARCH/
+
+`Search` retorna dois valores, um slice de resultados e um erro
+
+  func Search(query string) ([]Result, error) {...}
+
+Os resultados são válidos somente se o erro for nil
+
+* Renderizando os resultados da busca
+
+.code gocodelab/frontend1.go /Render the/,/ENDRENDER/
+
+`resultsTemplate.Execute` gera HTML escreve no `io.Writer`:
+
+  type Writer interface {
+          Write(p []byte) (n int, err error)
+  }
+
+`http.ResponseWriter` implements the `io.Writer` interface.
+
+* HTML templates opera em tipos Go
+
+.play gocodelab/frontend1.go /A Result contains/,/\)\)/
+
+* Dispara a consulta para a Google Search API
+
+.code gocodelab/frontend1.go /func Search/,/resp.Body.Close/
+
+`defer` garante que `resp.Body.Close` é chamado quando `Search` retorna
+
+* Parse da resposta JSON numa struct Go
+
+.link https://developers.google.com/web-search/docs/#fonje
+
+.code gocodelab/frontend1.go /var jsonResponse/,/^}/
+
+* Pronto!
+
+All the packages are from the standard library:
+
+  import (
+  	"encoding/json"
+  	"fmt"
+  	"html/template"
+  	"log"
+  	"net/http"
+  	"net/url"
+  	"time"
+  )
+
+* E agora?
+
+- Em breve, nesse mesmo meetup, a segunda parte do codelab!
+
+Herança, Composição, Testes, Concorrência e mais
+
+- Enquanto isso:
+
+Tour online: [[tour.golang.org][tour.golang.org]]
+Um bocado de material: [[golang.org/wiki/Learn][golang.org/wiki/Learn]]
+Se junte a comunidade: [[golang.org/project][golang.org/project]]

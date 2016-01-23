@@ -1,0 +1,180 @@
+Go Codelab: Aspectos Avançados
+Jan 2015, GDG Maceió
+Tags: go golang
+
+# Herança, Testes e Concorrência.
+
+Daniel Fireman
+Ex Googler, Gopher, metido a corredor
+danielfireman@gmail.com
+http://www.danielfireman.com
+
+* Parte 3: Interfaces, Herança e Composição
+
+* Interfaces
+
+Uma interface declara um conjunto de métodos
+
+In Java:
+
+	interface Switch {
+		void open();
+		void close();
+	}
+
+In Go:
+
+	type OpenCloser interface {
+		Open()
+		Close()
+	}
+
+* It's all about satisfaction
+
+As interfaces Java são verificadas *explicitamente*.
+
+As interfaces Go são verificadas *implicitamente*.
+
+.image gocodelab/Rolling_Stones_09.jpg _ 512
+
+.caption by Gorupdebesanez [[http://creativecommons.org/licenses/by-sa/3.0][CC-BY-SA-3.0]], via [[http://commons.wikimedia.org/wiki/File%3ARolling_Stones_09.jpg][Wikimedia Commons]]
+
+* Go: verificação implícita
+
+Se um tipo define todos os métodos de uma interface, este tipo é daquela interface
+
+Benefícios:
+
+- menos dependências
+- sem hierarquia de código
+- facilita o desenvolvimento orgânico da hierarquia
+- menos _over_ _thinking_ e _over_ _generalization_
+
+Composição é a única solução para compartilhamento de código
+
+* Subtipagem estrutural
+
+É como duck typing, mas verificado em tempo de compilação
+
+	type Car struct {
+		w [4]Wheels
+	}
+	func (c *Car) Move(x, y int) error {...}
+	func Park(c *Car) error {...}
+
+Sistema em produção, estacionando vários carros
+O negócio cresce e quer estacionar motos
+
+	type Motorcycle struct {
+		w [2]Wheels
+	}
+	func (c *Motorcycle) Move(x, y int) error {...}
+
+	type Moveable interface {
+		func Move(x, y int) error
+	}
+	func Park(c *Moveable) error {...}
+
+* Tópicos avançados em herança e composição
+
+* Struct embedding de outras structs
+
+* Herança de implementação
+
+- Expressada em Go como campos sem nome
+
+- Todos os campos e metodos do tipo embutido são definidos no tipo que está embutindo
+
+Continua sendo *composição*
+Sim, é um proxy
+
+Parece com herança em Java, so que:
+
+- O tipo embutido não sabe que está sendo embutido
+- Go não faz conversão implícita de tipo. Um tipo não *é* o outro
+
+* Exemplo:
+
+	type Person struct {
+		First string
+		Last  string
+		Age   int
+	}
+	func (p Person) Name() string { return First + " " + Last }
+
+Podemos definir um tipo `Employee` embutindo `Person`:
+
+	type Employee struct {
+	    Person
+	}
+
+	e := Employee{Person{"Daniel", "Fireman", 32}}
+
+Todos os campos e métodos de `Person` estarão disponíveis em `Employee`,
+mas `Employee` não *é* uma `Person` (não existe interface "na jogada")
+
+* Struct embedding de interfaces
+
+* Herança seletiva
+
+- E se `Employee` só precisar de `Name`?
+
+	type Employee struct {
+	    Namer
+	}
+
+	type Namer interface {
+	    Name() string
+	}
+
+E todo o resto do código continua funcionando
+
+* Facilitar testes/mocking
+
+Para testar `handleCon`
+
+	func handleConn(conn net.Conn)
+
+Precisamos criar um fake de `net.Conn`
+
+	type Conn interface {
+	        Read(b []byte) (n int, err error)
+	        Write(b []byte) (n int, err error)
+	        ...
+	}
+
+Seria muito códig chato, mas ...
+
+	type fakeConn struct {
+	    net.Conn
+	    r io.Reader
+	}
+
+	func (c fakeConn) Read(b []byte) (int, error) { return c.r.Read(b) }
+
+* Interface embedding de interfaces
+
+* Bem parecido com a herança que você conhece
+
+	type ReadWriteCloser interface {
+		Reader
+		Writer
+		Closer
+	}
+
+Todo io.ReadWriteCloser é um io.Reader, mas não o contrário.
+
+- Somado, verificação implícita, estimula a criação de interfaces pequenas
+
+Exemplo, o pacote [[golang.org/pkg/io][io]]
+Diminui acoplamento
+Aumenta a coesão
+
+* Mão na massa!
+
+* Mais resultados
+
+- Vamos buscar de outra máquina de busca (MS Bing) e compor os resultados
+- Para evitar ter que criar chave no MS Azure Market Place, criei um servidor proxy para o Bing
+
+.image gocodelab/ninja.jpg 300 _
